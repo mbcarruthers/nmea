@@ -1,0 +1,191 @@
+
+#include <stdio.h>
+#include "cbuf.h"
+
+#define BUFFER_LENGTH 24
+
+static NMEA_SentenceType recvd[BUFFER_LENGTH]; // Ring buffer -> log
+static NMEA_SentenceType *front = recvd;
+static NMEA_SentenceType *const back = recvd + BUFFER_LENGTH;
+static size_t count = 0;
+
+size_t capacity(void) {
+    return (size_t)(front >= back) ? (front - back) : ((sizeof(recvd) / sizeof(recvd[0])) - (back- front));
+}
+
+
+void push(NMEA_SentenceType sentence) {
+    *front = sentence;
+
+
+    if (count < BUFFER_LENGTH) {
+        count++;
+    } else {
+        // if full overwrite old data, count stays at BUFFER_LENGTH
+    }
+
+
+    front++;
+    if (front == back) {
+        front = recvd;
+    }
+
+    printf("Capacity %zu\n", capacity());
+}
+
+
+// TODO - should probably move these functions to another file
+// Function to print GPGGA_Sentence
+void print_GPGGA_Sentence(const struct GPGGA_Sentence *gpgga) {
+    printf("GPGGA Sentence:\n");
+    printf("  UTC Time: %06u\n", gpgga->utc_time);
+    printf("  Latitude: %.6f %c\n", gpgga->latitude, gpgga->lat_dir);
+    printf("  Longitude: %.6f %c\n", gpgga->longitude, gpgga->lon_dir);
+    printf("  Fix Quality: %u\n", gpgga->fix_quality);
+    printf("  Number of Satellites: %u\n", gpgga->num_satellites);
+    printf("  HDOP: %.2f\n", gpgga->hdop);
+    printf("  Altitude: %.2f meters\n", gpgga->altitude);
+    printf("  Geoidal Separation: %.2f meters\n", gpgga->geoidal_seperation);
+}
+
+// Function to print GPGLL_Sentence
+void print_GPGLL_Sentence(const struct GPGLL_Sentence *gpgll) {
+    printf("GPGLL Sentence:\n");
+    printf("  Latitude: %.6f %c\n", gpgll->latitude, gpgll->lat_dir);
+    printf("  Longitude: %.6f %c\n", gpgll->longitude, gpgll->lon_dir);
+    printf("  UTC Time: %06u\n", gpgll->utc_time);
+    printf("  Status: %c\n", gpgll->status);
+}
+
+// Function to print GPRMC_Sentence
+void print_GPRMC_Sentence(const struct GPRMC_Sentence *gprmc) {
+    printf("GPRMC Sentence:\n");
+    printf("  UTC Time: %06u\n", gprmc->utc_time);
+    printf("  Status: %c\n", gprmc->status);
+    printf("  Latitude: %.6f %c\n", gprmc->latitude, gprmc->lat_dir);
+    printf("  Longitude: %.6f %c\n", gprmc->longitude, gprmc->lon_dir);
+    printf("  Speed over Ground: %.2f knots\n", gprmc->speed_over_ground);
+    printf("  Course over Ground: %.2f degrees\n", gprmc->course_over_ground);
+    printf("  Date: %06u\n", gprmc->date);
+    printf("  Magnetic Variation: %.2f %c\n", gprmc->magnetic_variation, gprmc->var_dir);
+}
+
+// Function to print GPVTG_Sentence
+void print_GPVTG_Sentence(const struct GPVTG_Sentence *gpvtg) {
+    printf("GPVTG Sentence:\n");
+    printf("  True Track: %.2f %c\n", gpvtg->true_track, gpvtg->true_indicator);
+    printf("  Magnetic Track: %.2f %c\n", gpvtg->magnetic_track, gpvtg->magnetic_indicator);
+    printf("  Speed (knots): %.2f %c\n", gpvtg->speed_knots, gpvtg->knots_indicator);
+    printf("  Speed (km/h): %.2f %c\n", gpvtg->speed_kmph, gpvtg->kmph_indicator);
+}
+
+// Function to print GPGSA_Sentence
+void print_GPGSA_Sentence(const struct GPGSA_Sentence *gpgsa) {
+    printf("GPGSA Sentence:\n");
+    printf("  Mode: %c\n", gpgsa->mode);
+    printf("  Fix Type: %u\n", gpgsa->fix_type);
+    printf("  Satellites: ");
+    for (int i = 0; i < 12; i++) {
+        printf("%u ", gpgsa->satellites[i]);
+    }
+    printf("\n  PDOP: %.2f\n", gpgsa->pdop);
+    printf("  HDOP: %.2f\n", gpgsa->hdop);
+    printf("  VDOP: %.2f\n", gpgsa->vdop);
+}
+
+// Function to print GPGSV_Sentence
+void print_GPGSV_Sentence(const struct GPGSV_Sentence *gpgsv) {
+    printf("GPGSV Sentence:\n");
+    printf("  Total Messages: %u\n", gpgsv->total_messages);
+    printf("  Message Number: %u\n", gpgsv->message_number);
+    printf("  Satellites in View: %u\n", gpgsv->satellites_in_view);
+    for (int i = 0; i < 4; i++) {
+        printf("    Satellite %d:\n", i + 1);
+        printf("      PRN: %u\n", gpgsv->satellite_info[i].ptn);
+        printf("      Elevation: %u degrees\n", gpgsv->satellite_info[i].elevation);
+        printf("      Azimuth: %u degrees\n", gpgsv->satellite_info[i].azimuth);
+        printf("      SNR: %u dB\n", gpgsv->satellite_info[i].snr);
+    }
+}
+
+// Function to print GPZDA_Sentence
+void print_GPZDA_Sentence(const struct GPZDA_Sentence *gpzda) {
+    printf("GPZDA Sentence:\n");
+    printf("  UTC Time: %06u\n", gpzda->utc_time);
+    printf("  Date: %02u/%02u/%04u\n", gpzda->day, gpzda->month, gpzda->year);
+    printf("  Local Hour Offset: %d\n", gpzda->local_hour_offset);
+    printf("  Local Minute Offset: %d\n", gpzda->local_minute_offset);
+}
+
+// Function to print GPGBS_Sentence
+void print_GPGBS_Sentence(const struct GPGBS_Sentence *gpgbs) {
+    printf("GPGBS Sentence:\n");
+    printf("  UTC Time: %06u\n", gpgbs->utc_time);
+    printf("  Horizontal Error: %.2f meters\n", gpgbs->horizontal_error);
+    printf("  Vertical Error: %.2f meters\n", gpgbs->vertical_error);
+    printf("  Position Error: %.2f meters\n", gpgbs->position_error);
+}
+
+void printall(void) {
+    for(size_t i = 0; i < capacity();i++) {
+       switch(recvd[i].nmea) {
+           case GPGGA:
+               print_GPGGA_Sentence(&recvd[i].value.gpgga);
+               break;
+           case GPGLL:
+               print_GPGLL_Sentence(&recvd[i].value.gpgll);
+               break;
+           case GPRMC:
+               print_GPRMC_Sentence(&recvd[i].value.gprmc);
+               break;
+           case GPVTG:
+               print_GPVTG_Sentence(&recvd[i].value.gpvtg);
+               break;
+           case GPGSA:
+               print_GPGSA_Sentence(&recvd[i].value.gpgsa);
+               break;
+           case GPGSV:
+               print_GPGSV_Sentence(&recvd[i].value.gpgsv);
+               break;
+           case GPZDA:
+               print_GPZDA_Sentence(&recvd[i].value.gpzda);
+               break;
+           case GPGBS:
+               print_GPGBS_Sentence(&recvd[i].value.gpgbs);
+               break;
+           case UNKNOWN:
+               printf("Unknown printall called\n");
+               break;
+            default:
+               printf("default printall called \n");
+               break;
+       }
+    }
+}
+
+
+//#include <stdio.h>
+//#include <stdlib.h>
+//#include "cbuf.h"
+//
+//#define BUFFER_LENGTH 24
+//
+//
+//static NMEA_SentenceType recvd[BUFFER_LENGTH]; // Ring buffer -> log
+//static NMEA_SentenceType * front = recvd;
+//static NMEA_SentenceType * back = &recvd[BUFFER_LENGTH];
+//
+//size_t capacity(void) {
+//    return (size_t)(front >= back) ? (front - back) : ((sizeof(recvd) / sizeof(recvd[0])) - (back- front));
+//}
+//
+//void push(NMEA_SentenceType sentence) {
+//    *front = sentence;
+//
+//    // Advance the front pointer
+//    if (++front == back) {
+//        front = recvd; // cheap circular buffer
+//    }
+//    printf("Capacity %zu \n",
+//           capacity());
+//}

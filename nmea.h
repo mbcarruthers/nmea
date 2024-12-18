@@ -1,37 +1,23 @@
-#ifndef __NMEA_PARSE__
-#define __NMEA_PARSE__
+#ifndef NMEA_H__
+#define NMEA_H__
 
+#include "cbuf.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "sentences.h"
 
-#ifndef EOF
-#define EOF '\0'
-#endif
 #define TOKEN_SIZE 256
+#define MAX_TOKENS 64
+#define TOKEN_LENGTH 64
 
+size_t parse_csv_line(const char * line, char tokens[MAX_TOKENS][TOKEN_LENGTH]);
 
+NMEA_SentenceType parser(char * restrict str);
 
-char nmea[] = "$GPGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,*47";
+// parse_sentence original design for function. still screwing around with this one
+void parse_sentence(char * str);
 
-void parse_sentence(char * restrict str) {
-  char token[TOKEN_SIZE] = {0}, *strp = str;
-  struct NMEA_sentenceType * sentence;
-  while(*strp) {
-      if(*strp == '$') {
-          strp++;
-          int i = 0;
-          while(*strp != ',' && *strp != '\0') {
-              token[i++] = *strp++; // copy char move pointer. beautiful
-          }
-          token[i] = '\0';
-          NMEA_Sentence mask = nmea_to_mask(token);
-          printf("Token %s \n Mask %x \n",
-          token, mask);
-          return; // Note: Keep return to ensure the next line is read
-      }
-  }
-}
-// __NMEA_PARSE__
+// NMEA_H__
 #endif

@@ -1,5 +1,5 @@
-#ifndef __NMEA_SENTENCES__
-#define __NMEA_SENTENCES__
+#ifndef NMEA_SENTENCES_H__
+#define NMEA_SENTENCES_H__
 
 #include <stdint.h>
 
@@ -14,7 +14,7 @@ typedef enum {
     GPZDA = (1 << 6), // Time and Date 0b01000000
     GPGBS = (1 << 7), // GNSS Satellite Fault Detection 0b10000000
     UNKNOWN = 0x00
-} NMEA_Sentence;
+} NMEA_Mask;
 
 // GPS Fix data
 struct GPGGA_Sentence {
@@ -36,7 +36,7 @@ struct GPGLL_Sentence {
     char lat_dir;
     float longitude;
     char lon_dir;
-    uint32_t uts_time; // HHMMSS
+    uint32_t utc_time; // HHMMSS
     char status; // 'A' = Valid, 'V' = invalid
 };
 
@@ -108,9 +108,9 @@ struct GPGBS_Sentence {
     float position_error; // overall position accuracy in meters
 };
 
-//
+
 typedef struct {
-    NMEA_Sentence nmea;
+    NMEA_Mask nmea;
     union {
         struct GPGGA_Sentence gpgga;
         struct GPGLL_Sentence gpgll;
@@ -124,22 +124,8 @@ typedef struct {
 } NMEA_SentenceType;
 
 // determines what type of NMEA sentence it is based on the 3rd and fourth letters
-// with a little bit of bitwise hackery 
-uint8_t nmea_to_mask(const char *token) {
-    switch (((token[2] & 0xFF) << 8) | (token[3] & 0xFF)) {
-        case ('G' << 8) | 'G': return GPGGA;
-        case ('G' << 8) | 'L': return GPGLL;
-        case ('R' << 8) | 'M': return GPRMC;
-        case ('V' << 8) | 'T': return GPVTG;
-        case ('G' << 8) | 'S': return GPGSA;
-        case ('G' << 8) | 'V': return GPGSV;
-        case ('Z' << 8) | 'D': return GPZDA;
-        case ('B' << 8) | 'S': return GPGBS;
-        default: return 0;
-    }
-}
+// with a little bit of bitwise hackery
+uint8_t nmea_to_mask(const char * restrict token);
 
-
-
-// __NMEA_SENTENCES__
+// NMEA_SENTENCES_H__
 #endif
