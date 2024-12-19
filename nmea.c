@@ -58,11 +58,18 @@ NMEA_SentenceType parser(char * restrict str) {
     char * sentence_type = tokens[0] + sizeof(char); // string variable for NMEA sentence type - sizeof(char) for explicitness
 
     sentence.nmea = nmea_to_mask(sentence_type);
-
     // Todo: declare iterator(not i) = 0 in switch,i++ indexs.
+
+#ifdef DEBUG
+    printf("[DEBUG] File: %s, Line: %d\n"
+       "        Token: %s\n"
+       "        Mask:  0x%02X\n",
+       __FILE__, __LINE__,
+       sentence_type, sentence.nmea);
+#endif
+
     switch(sentence.nmea) {
         case GPGGA:
-            printf("GPGGA\n"); // todo: remove
             sentence.value.gpgga.utc_time = parse_uint32(tokens[1]);
             sentence.value.gpgga.latitude = parse_float(tokens[2]);
             sentence.value.gpgga.lat_dir = (char)(*tokens[3]);
@@ -76,7 +83,6 @@ NMEA_SentenceType parser(char * restrict str) {
             return sentence;
             break;
         case GPGLL:
-            printf("GPGLL\n"); // todo remove
             sentence.value.gpgll.latitude = parse_float(tokens[1]);
             sentence.value.gpgll.lat_dir = (char)(*tokens[2]);
             sentence.value.gpgll.longitude = parse_float(tokens[3]);
@@ -86,7 +92,6 @@ NMEA_SentenceType parser(char * restrict str) {
             return sentence;
             break;
         case GPRMC:
-            printf("GPRMC \n"); // todo remove
             sentence.value.gprmc.utc_time = parse_uint32(tokens[1]);
             sentence.value.gprmc.latitude = parse_float(tokens[2]);
             sentence.value.gprmc.lat_dir = (char)(*tokens[3]);
@@ -98,7 +103,6 @@ NMEA_SentenceType parser(char * restrict str) {
             return sentence;
             break;
         case GPVTG:
-            printf("GPVTG\n"); // todo remove
             sentence.value.gpvtg.true_track = parse_float(tokens[1]);
             sentence.value.gpvtg.true_indicator = (char)(*tokens[2]);
             sentence.value.gpvtg.magnetic_track = parse_float(tokens[3]);
@@ -110,7 +114,6 @@ NMEA_SentenceType parser(char * restrict str) {
             return sentence;
             break;
         case GPGSA:
-            printf("GPGSA\n"); // todo remove
             sentence.value.gpgsa.mode = (char)(*tokens[1]);
             sentence.value.gpgsa.fix_type = (uint8_t)(*tokens[2]);
             for (int i = 0; i < 12; i++) {
@@ -127,7 +130,6 @@ NMEA_SentenceType parser(char * restrict str) {
             return sentence;
             break;
         case GPGSV:
-            printf("GPGSV\n"); // todo remove
             sentence.value.gpgsv.total_messages = (uint8_t)atoi(tokens[1]);
             sentence.value.gpgsv.message_number = (uint8_t)atoi(tokens[2]);
             sentence.value.gpgsv.satellites_in_view = (uint8_t)atoi(tokens[3]);
@@ -141,16 +143,15 @@ NMEA_SentenceType parser(char * restrict str) {
                     sentence.value.gpgsv.satellite_info[i].azimuth = 0;
                     sentence.value.gpgsv.satellite_info[i].snr = 0;
                 } else {
-                    sentence.value.gpgsv.satellite_info[i].ptn = (uint8_t)atoi(tokens[base]);
-                    sentence.value.gpgsv.satellite_info[i].elevation = (uint8_t)atoi(tokens[base + 1]);
-                    sentence.value.gpgsv.satellite_info[i].azimuth = (uint8_t)atoi(tokens[base + 2]);
+                    sentence.value.gpgsv.satellite_info[i].ptn = parse_uint32(tokens[base]);
+                    sentence.value.gpgsv.satellite_info[i].elevation = parse_uint32(tokens[base + 1]);
+                    sentence.value.gpgsv.satellite_info[i].azimuth = parse_uint32(tokens[base + 2]);
                     sentence.value.gpgsv.satellite_info[i].snr = (uint8_t)atoi(tokens[base + 3]);
                 }
             }
             return sentence;
             break;
         case GPZDA:
-            printf("GPZDA\n"); // todo remove
             sentence.value.gpzda.utc_time = parse_uint32(tokens[1]);
             sentence.value.gpzda.day = (uint8_t)atoi(tokens[2]);
             sentence.value.gpzda.month = (uint8_t)atoi(tokens[3]);
@@ -160,7 +161,6 @@ NMEA_SentenceType parser(char * restrict str) {
             return sentence;
             break;
         case GPGBS:
-            printf("GPGBS\n"); // todo remove
             sentence.value.gpgbs.utc_time = parse_uint32(tokens[1]);
             sentence.value.gpgbs.horizontal_error = parse_float(tokens[2]);
             sentence.value.gpgbs.vertical_error = parse_float(tokens[3]);
