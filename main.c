@@ -4,7 +4,7 @@
 
 // basic operations
 // open file
-// read fil by line
+// read file by line
 // parse line
 // push to array
 // print array
@@ -19,7 +19,6 @@ int main(void) {
     char buffer[256];
 
     while(fgets(buffer, sizeof(buffer), fp) != NULL) {
-//          parse_sentence(buffer);
         push(parser(buffer));
     }
     printall();
