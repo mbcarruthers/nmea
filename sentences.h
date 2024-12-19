@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 
+// Note: if no comment on field type it should be self explanatory
+// Note cont: or previously written
+
 // Todo: Should these just be defines?
 typedef enum {
     GPGGA = (1 << 0) , // GPS 0b00000001
@@ -37,13 +40,13 @@ struct GPGLL_Sentence {
     float longitude;
     char lon_dir;
     uint32_t utc_time; // HHMMSS
-    char status; // 'A' = Valid, 'V' = invalid
+    char status; // A = valid, V = invalid
 };
 
 // minimum  nav data
 struct GPRMC_Sentence {
     uint32_t utc_time; // HHMMSS
-    char status; // A = good, B = bad
+    char status; // A  = valid , v = invalid
     float latitude;
     char lat_dir;
     float longitude;

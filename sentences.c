@@ -1,5 +1,7 @@
 #include "sentences.h"
-
+// bit twiddling hacks - Stanford
+// it works don't touch it
+// returns what type of
 uint8_t nmea_to_mask(const char * restrict token) {
     switch (((token[2] & 0xFF) << 8) | (token[3] & 0xFF)) {
         case ('G' << 8) | 'G': return GPGGA;

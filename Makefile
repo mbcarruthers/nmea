@@ -28,7 +28,6 @@ $(TARGET): $(O_FILES)
 clean: ## clean the project files
 	rm -f $(TARGET) $(O_FILES)
 
-
 run: ## run the program
 	./$(TARGET)
 

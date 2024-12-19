@@ -50,13 +50,15 @@ static inline uint32_t parse_uint32(const char * token) {
 
 NMEA_SentenceType parser(char * restrict str) {
     char tokens[MAX_TOKENS][TOKEN_LENGTH];
+    // Note: unused and known
     const size_t count = parse_csv_line(str, tokens);
 
     // now all values are comma seperated
     NMEA_SentenceType sentence = {0};
-    char * strp = tokens[0] + sizeof(char);
-    sentence.nmea = nmea_to_mask(strp);
+    char * sentence_type = tokens[0] + sizeof(char); // string variable for NMEA sentence type - sizeof(char) for explicitness
+    sentence.nmea = nmea_to_mask(sentence_type);
 
+    // Todo: declare iterator(not i) = 0 in switch,i++ indexs.
     switch(sentence.nmea) {
         case GPGGA:
             printf("GPGGA\n"); // todo: remove
@@ -112,7 +114,7 @@ NMEA_SentenceType parser(char * restrict str) {
             sentence.value.gpgsa.fix_type = (uint8_t)(*tokens[2]);
             for (int i = 0; i < 12; i++) {
                 if (tokens[3 + i][0] == '\0') {
-                    // If the token is empty, assign a default value (e.g., 0) or handle it as needed
+                    // Note: Empty tokens given 0 value in gpgsa.satellites
                     sentence.value.gpgsa.satellites[i] = 0;
                 } else {
                     sentence.value.gpgsa.satellites[i] = (uint8_t)atoi(tokens[3 + i]);
@@ -128,8 +130,10 @@ NMEA_SentenceType parser(char * restrict str) {
             sentence.value.gpgsv.total_messages = (uint8_t)atoi(tokens[1]);
             sentence.value.gpgsv.message_number = (uint8_t)atoi(tokens[2]);
             sentence.value.gpgsv.satellites_in_view = (uint8_t)atoi(tokens[3]);
+            // base = accounting for previous amount of entries(above lines)
             for (int i = 0; i < 4; i++) {
                 int base = 4 + (i * 4);
+                // Note: if empty data then satellites info zero initialized
                 if (tokens[base][0] == '\0') {
                     sentence.value.gpgsv.satellite_info[i].ptn = 0;
                     sentence.value.gpgsv.satellite_info[i].elevation = 0;
@@ -174,6 +178,8 @@ NMEA_SentenceType parser(char * restrict str) {
 
 }
 
+// todo remove?
+// parse_sentence - unused currently. Keep for now. 12.18.24
 void parse_sentence(char * str) {
     char token[TOKEN_SIZE] = {0}, *strp = str;
     char tokens[MAX_TOKENS][TOKEN_LENGTH];

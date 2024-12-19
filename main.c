@@ -2,6 +2,13 @@
 #include <stdlib.h>
 #include "nmea.h"
 
+// basic operations
+// open file
+// read fil by line
+// parse line
+// push to array
+// print array
+
 int main(void) {
     FILE* fp;
     fp = fopen("nmea.txt", "r");
@@ -16,7 +23,6 @@ int main(void) {
         push(parser(buffer));
     }
     printall();
-
     fclose(fp);
-    return 0;
+    return EXIT_SUCCESS;
 }

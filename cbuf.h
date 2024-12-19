@@ -7,6 +7,8 @@
 size_t capacity(void);
 
 void push(NMEA_SentenceType sentence);
+
 void printall(void);
+
 // CBUF_H__
 #endif
