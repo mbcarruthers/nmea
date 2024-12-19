@@ -7,7 +7,7 @@
 static NMEA_SentenceType recvd[BUFFER_LENGTH]; // Ring buffer -> log
 static NMEA_SentenceType *front = recvd;
 static NMEA_SentenceType *const back = recvd + BUFFER_LENGTH;
-static size_t count = 0;
+static size_t count = 0; // Not really necessary
 
 size_t capacity(void) {
     return (size_t)(front >= back) ? (front - back) : ((sizeof(recvd) / sizeof(recvd[0])) - (back- front));
@@ -29,8 +29,9 @@ void push(NMEA_SentenceType sentence) {
     if (front == back) {
         front = recvd;
     }
-
+#ifdef DEBUG
     printf("Capacity %zu\n", capacity());
+#endif
 }
 
 
@@ -96,9 +97,9 @@ void print_GPGSV_Sentence(const struct GPGSV_Sentence * gpgsv) {
     printf("  Satellites in View: %u\n", gpgsv->satellites_in_view);
     for (int i = 0; i < 4; i++) {
         printf("    Satellite %d:\n", i + 1);
-        printf("      PRN: %u\n", gpgsv->satellite_info[i].ptn);
-        printf("      Elevation: %u degrees\n", gpgsv->satellite_info[i].elevation);
-        printf("      Azimuth: %u degrees\n", gpgsv->satellite_info[i].azimuth);
+        printf("      PRN: %d\n", gpgsv->satellite_info[i].ptn);
+        printf("      Elevation: %d degrees\n", gpgsv->satellite_info[i].elevation);
+        printf("      Azimuth: %d degrees\n", gpgsv->satellite_info[i].azimuth);
         printf("      SNR: %u dB\n", gpgsv->satellite_info[i].snr);
     }
 }
