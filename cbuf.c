@@ -3,12 +3,12 @@
 #include "cbuf.h"
 
 #define BUFFER_LENGTH 24
-
 static NMEA_SentenceType recvd[BUFFER_LENGTH]; // Ring buffer -> log
-static NMEA_SentenceType *front = recvd;
-static NMEA_SentenceType *const back = recvd + BUFFER_LENGTH;
+static NMEA_SentenceType * front = recvd;
+static NMEA_SentenceType * const back = recvd + BUFFER_LENGTH;
 static size_t count = 0; // Not really necessary
 
+// capacity hold where the array is currently at
 size_t capacity(void) {
     return (size_t)(front >= back) ? (front - back) : ((sizeof(recvd) / sizeof(recvd[0])) - (back- front));
 }
@@ -16,15 +16,11 @@ size_t capacity(void) {
 
 void push(NMEA_SentenceType sentence) {
     *front = sentence;
-
-
     if (count < BUFFER_LENGTH) {
         count++;
     } else {
         // if full overwrite old data, count stays at BUFFER_LENGTH
     }
-
-
     front++;
     if (front == back) {
         front = recvd;
@@ -34,8 +30,8 @@ void push(NMEA_SentenceType sentence) {
 #endif
 }
 
-
 // TODO - should probably move these functions to another file
+
 
 void print_GPGGA_Sentence(const struct GPGGA_Sentence * gpgga) {
     printf("GPGGA Sentence:\n");
