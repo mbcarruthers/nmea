@@ -13,7 +13,7 @@ typedef enum {
     GPRMC = (1 << 2), // Nav data 0b00000100
     GPVTG = (1 << 3), // track made good and ground speed 0b00001000
     GPGSA = (1 << 4), // GPS DOP and active satellites 0b00010000
-    GPGSV=  (1 << 5), // satellites within view 0b00100000
+    GPGSV = (1 << 5), // satellites within view 0b00100000
     GPZDA = (1 << 6), // Time and Date 0b01000000
     GPGBS = (1 << 7), // GNSS Satellite Fault Detection 0b10000000
     UNKNOWN = 0x00
@@ -128,7 +128,7 @@ typedef struct {
 
 // determines what type of NMEA sentence it is based on the 3rd and fourth letters
 // with a little bit of bitwise hackery
-uint8_t nmea_to_mask(const char * restrict token);
+NMEA_Mask nmea_to_mask(const char * restrict token);
 
 // NMEA_SENTENCES_H__
 #endif

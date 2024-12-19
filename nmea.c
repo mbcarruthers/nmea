@@ -58,7 +58,7 @@ NMEA_SentenceType parser(char * restrict str) {
     char * sentence_type = tokens[0] + sizeof(char); // string variable for NMEA sentence type - sizeof(char) for explicitness
 
     sentence.nmea = nmea_to_mask(sentence_type);
-    
+
     // Todo: declare iterator(not i) = 0 in switch,i++ indexs.
     switch(sentence.nmea) {
         case GPGGA:
