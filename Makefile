@@ -7,7 +7,8 @@ DEBUG = -DDEBUG
 C_SOURCES = main.c cbuf.c nmea.c sentences.c
 O_FILES = $(C_SOURCES:.c=.o)
 DEFAULT_GOAL := help
-.PHONY: clean run
+
+.PHONY: help test all debug dall clean run
 
 help:
 		@awk 'BEGIN {FS = ":.*##"; printf "\nAvailable commands:\n"} \
@@ -17,12 +18,12 @@ test: clean all run ## everything! all! at once!
 
 all: $(TARGET) ## builds the whole project
 
-# Link the target binary from object files
-$(TARGET): $(O_FILES)
+
+$(TARGET): $(O_FILES) ## Link the target binary from object files
 	$(CC) $(C_FLAGS) -o $@ $^
 
-# Compile each .c file into a .o file
-%.o: %.c
+
+%.o: %.c ## Compile each .c file into a .o file
 	$(CC) $(C_FLAGS) -c $< -o $@
 
 debug: clean dall run ## clean, compile with debug, run
