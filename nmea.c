@@ -93,13 +93,16 @@ NMEA_SentenceType parser(char * restrict str) {
             break;
         case GPRMC:
             sentence.value.gprmc.utc_time = parse_uint32(tokens[1]);
-            sentence.value.gprmc.latitude = parse_float(tokens[2]);
-            sentence.value.gprmc.lat_dir = (char)(*tokens[3]);
-            sentence.value.gprmc.speed_over_ground = parse_float(tokens[4]);
-            sentence.value.gprmc.course_over_ground = parse_float(tokens[5]);
-            sentence.value.gprmc.date = parse_uint32(tokens[6]);
-            sentence.value.gprmc.magnetic_variation = parse_float(tokens[7]);
-            sentence.value.gprmc.var_dir = (char)(*tokens[8]);
+            sentence.value.gprmc.status = (char)(*tokens[2]);
+            sentence.value.gprmc.latitude = parse_float(tokens[3]);
+            sentence.value.gprmc.lat_dir = (char)(*tokens[4]);
+            sentence.value.gprmc.longitude = parse_float(tokens[5]);
+            sentence.value.gprmc.lon_dir = (char)(*tokens[6]);
+            sentence.value.gprmc.speed_over_ground = parse_float(tokens[7]);
+            sentence.value.gprmc.course_over_ground = parse_float(tokens[8]);
+            sentence.value.gprmc.date = parse_uint32(tokens[9]);
+            sentence.value.gprmc.magnetic_variation = parse_float(tokens[10]);
+            sentence.value.gprmc.var_dir = (char)(*tokens[11]);
             return sentence;
             break;
         case GPVTG:
