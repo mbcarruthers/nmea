@@ -56,8 +56,9 @@ NMEA_SentenceType parser(char * restrict str) {
     // now all values are comma seperated
     NMEA_SentenceType sentence = {0};
     char * sentence_type = tokens[0] + sizeof(char); // string variable for NMEA sentence type - sizeof(char) for explicitness
-    sentence.nmea = nmea_to_mask(sentence_type);
 
+    sentence.nmea = nmea_to_mask(sentence_type);
+    
     // Todo: declare iterator(not i) = 0 in switch,i++ indexs.
     switch(sentence.nmea) {
         case GPGGA:
@@ -130,9 +131,9 @@ NMEA_SentenceType parser(char * restrict str) {
             sentence.value.gpgsv.total_messages = (uint8_t)atoi(tokens[1]);
             sentence.value.gpgsv.message_number = (uint8_t)atoi(tokens[2]);
             sentence.value.gpgsv.satellites_in_view = (uint8_t)atoi(tokens[3]);
-            // base = accounting for previous amount of entries(above lines)
+            // base = offset used to calculate the index of satellite data tokens
             for (int i = 0; i < 4; i++) {
-                int base = 4 + (i * 4);
+                int base = 4 + (i * 4); // * 4 accounts for the four attributes
                 // Note: if empty data then satellites info zero initialized
                 if (tokens[base][0] == '\0') {
                     sentence.value.gpgsv.satellite_info[i].ptn = 0;
