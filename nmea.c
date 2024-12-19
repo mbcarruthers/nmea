@@ -67,7 +67,7 @@ NMEA_SentenceType parser(char * restrict str) {
        __FILE__, __LINE__,
        sentence_type, sentence.nmea);
 #endif
-
+    // Todo: declare iterator(not i) = 0 in switch,i++ indexs.
     switch(sentence.nmea) {
         case GPGGA:
             sentence.value.gpgga.utc_time = parse_uint32(tokens[1]);
@@ -172,11 +172,11 @@ NMEA_SentenceType parser(char * restrict str) {
             break;
         case UNKNOWN:
             printf("Unknown detected \n");
-            return sentence;  // todo better solution
+            return sentence;  // returns empty sentence
             break;
         default:
             printf("------------------------Default ------------------\n");
-            return sentence; // todo - better solution
+            return sentence; // returns empty sentence
             break;
     }
 
