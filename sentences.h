@@ -86,9 +86,9 @@ struct GPGSV_Sentence {
     uint8_t message_number;
     uint8_t satellites_in_view;
     struct {
-        uint8_t ptn; // Satellite PRN number
-        uint8_t elevation; // elevation in degrees
-        uint8_t azimuth; // azimuth in degrees
+        uint32_t ptn; // Satellite PRN number
+        uint32_t elevation; // elevation in degrees
+        uint32_t azimuth; // azimuth in degrees
         uint8_t snr; // signal-to-noise ratio (0-99dB)
     } satellite_info[4];
 };
