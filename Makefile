@@ -2,11 +2,11 @@ CC = gcc
 C_FLAGS = -Wall -std=c23 -O2
 TARGET = main
 
+DEBUG = -DDEBUG
  ## Todo Sort and actually make the Makefile Robust, McCain
 C_SOURCES = main.c cbuf.c nmea.c sentences.c
 O_FILES = $(C_SOURCES:.c=.o)
 DEFAULT_GOAL := help
-
 .PHONY: clean run
 
 help:
@@ -24,6 +24,11 @@ $(TARGET): $(O_FILES)
 # Compile each .c file into a .o file
 %.o: %.c
 	$(CC) $(C_FLAGS) -c $< -o $@
+
+debug: clean dall run ## clean, compile with debug, run
+
+dall: ## compile with debug
+	$(CC) $(C_FLAGS) $(DEBUG) $(C_SOURCES) -o $(TARGET)
 
 clean: ## clean the project files
 	rm -f $(TARGET) $(O_FILES)
