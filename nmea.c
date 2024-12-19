@@ -1,16 +1,19 @@
 #include "nmea.h"
-
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 size_t parse_csv_line(const char * line, char tokens[MAX_TOKENS][TOKEN_LENGTH]) {
     size_t token_count = 0;
     const char *start = line;
     const char *end;
 
-    while ((end = strchr(start, ',')) != NULL) {
+    while((end = strchr(start, ',')) != NULL) {
         size_t length = end - start; // Length of the current token
 
 
-        if (length >= TOKEN_LENGTH) {
+        if(length >= TOKEN_LENGTH) {
             fprintf(stderr, "Token exceeds maximum size.\n");
             return 0; // Error
         }
@@ -24,7 +27,7 @@ size_t parse_csv_line(const char * line, char tokens[MAX_TOKENS][TOKEN_LENGTH]) 
         start = end + 1;
 
 
-        if (token_count >= MAX_TOKENS) {
+        if(token_count >= MAX_TOKENS) {
             fprintf(stderr, "Too many tokens in the line.\n");
             return token_count; // Return the count so far
         }
