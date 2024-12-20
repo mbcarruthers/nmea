@@ -50,9 +50,6 @@ void push(NMEA_SentenceType sentence) {
     if (front == back) {
         front = recvd;
     }
-#ifdef DEBUG
-    printf("Capacity %zu\n", capacity());
-#endif
 }
 
 // TODO - should probably move these functions to another file
