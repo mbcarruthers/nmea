@@ -60,7 +60,7 @@ static inline uint32_t parse_uint32(const char * token) {
 NMEA_SentenceType parser(char * restrict str) {
     char tokens[MAX_TOKENS][TOKEN_LENGTH];
     // Note: unused and known
-    const size_t count = parse_csv_line(str, tokens);
+    parse_csv_line(str, tokens);
 
     // now all values are comma seperated
     NMEA_SentenceType sentence = {0};
@@ -69,18 +69,6 @@ NMEA_SentenceType parser(char * restrict str) {
     sentence.nmea = nmea_to_mask(sentence_type);
     // Todo: declare iterator(not i) = 0 in switch,i++ indexs.
 
-
-
-#ifdef DEBUG
-    printf("[DEBUG] File: %s, Line: %d\n"
-       "        Token: %s\n"
-       "        Mask:  0x%02X\n",
-       __FILE__, __LINE__,
-       sentence_type, sentence.nmea);
-#endif
-
-
-    // Todo: declare iterator(not i) = 0 in switch,i++ indexs.
     switch(sentence.nmea) {
         case GPGGA:
             sentence.value.gpgga.utc_time = parse_uint32(tokens[1]);
