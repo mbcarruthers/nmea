@@ -43,6 +43,8 @@ size_t parse_csv_line(const char * line, char tokens[MAX_TOKENS][TOKEN_LENGTH]) 
     return token_count;
 }
 
+
+
 static inline float parse_float(const char * token) {
     return token ? strtof(token, NULL) : 0.0f;
 }
@@ -51,6 +53,10 @@ static inline uint32_t parse_uint32(const char * token) {
     return token ? (uint32_t) strtoul(token, NULL, 10) : 0;
 }
 
+
+
+// parser - the BIG function.
+// TODO: Consider using lookup tables, already have bitmasks ready
 NMEA_SentenceType parser(char * restrict str) {
     char tokens[MAX_TOKENS][TOKEN_LENGTH];
     // Note: unused and known
@@ -63,6 +69,8 @@ NMEA_SentenceType parser(char * restrict str) {
     sentence.nmea = nmea_to_mask(sentence_type);
     // Todo: declare iterator(not i) = 0 in switch,i++ indexs.
 
+
+
 #ifdef DEBUG
     printf("[DEBUG] File: %s, Line: %d\n"
        "        Token: %s\n"
@@ -70,6 +78,8 @@ NMEA_SentenceType parser(char * restrict str) {
        __FILE__, __LINE__,
        sentence_type, sentence.nmea);
 #endif
+
+
     // Todo: declare iterator(not i) = 0 in switch,i++ indexs.
     switch(sentence.nmea) {
         case GPGGA:
@@ -82,7 +92,7 @@ NMEA_SentenceType parser(char * restrict str) {
             sentence.value.gpgga.num_satellites = (uint8_t)(*tokens[7]);
             sentence.value.gpgga.hdop = parse_float(tokens[8]);
             sentence.value.gpgga.altitude = parse_float(tokens[9]);
-            sentence.value.gpgga.geoidal_seperation = parse_float(tokens[10]);
+            sentence.value.gpgga.geoidal_seperation = parse_float(tokens[11]);
             return sentence;
             break;
         case GPGLL:
@@ -182,7 +192,7 @@ NMEA_SentenceType parser(char * restrict str) {
             return sentence; // returns empty sentence
             break;
     }
-
+    return sentence;
 }
 
 // todo remove?
