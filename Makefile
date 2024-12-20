@@ -2,7 +2,7 @@ CC = gcc
 C_FLAGS = -Wall -std=c23 -O2
 TARGET = main
 
-DEBUG = -DDEBUG
+DEBUG = -DDEBUG -g
  ## Todo Sort and actually make the Makefile Robust, McCain
 C_SOURCES = main.c cbuf.c nmea.c sentences.c
 O_FILES = $(C_SOURCES:.c=.o)
