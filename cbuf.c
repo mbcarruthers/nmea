@@ -1,5 +1,5 @@
-
 #include <stdio.h>
+#include <stdlib.h>
 #include "cbuf.h"
 
 #define BUFFER_LENGTH 24
@@ -8,11 +8,36 @@ static NMEA_SentenceType * front = recvd;
 static NMEA_SentenceType * const back = recvd + BUFFER_LENGTH;
 static size_t count = 0; // Not really necessary
 
+// =======================================================================================
+//                                UTC-TIME DISPLAY HACKERY
+//                                    | LEAVE ALONE |
+
+// // breaks uint32_t into 3 seperate groups of 2 digits in respective order
+#define UNPACK_UINT32_TO_VALUES(n) (n) / 10000, ((n) / 100) % 100, (n) % 100
+
+// turns the above 3 digits into a uint8_t array
+#define WRAP_AS_ARGS(n) (uint8_t[]){UNPACK_UINT32_TO_VALUES(n)}
+
+// generates a null-terminated character array seperated by :'s
+// - turns index to ascii  , adds comma and null terminating \0
+#define FORMAT_TIME(args) (char[]){ \
+    ((args)[0] / 10 + '0'), ((args)[0] % 10 + '0'), ':', \
+    ((args)[1] / 10 + '0'), ((args)[1] % 10 + '0'), ':', \
+    ((args)[2] / 10 + '0'), ((args)[2] % 10 + '0'), '\0' }
+
+
+// PARSE_UTC - parses a UTC value
+// uses all of the above
+// input must be 6 digit uint32_t
+#define PARSE_UTC(c) FORMAT_TIME(WRAP_AS_ARGS(c))
+
+// =======================================================================================
+
+
 // capacity hold where the array is currently at
 size_t capacity(void) {
     return (size_t)(front >= back) ? (front - back) : ((sizeof(recvd) / sizeof(recvd[0])) - (back- front));
 }
-
 
 void push(NMEA_SentenceType sentence) {
     *front = sentence;
@@ -32,10 +57,9 @@ void push(NMEA_SentenceType sentence) {
 
 // TODO - should probably move these functions to another file
 
-
 void print_GPGGA_Sentence(const struct GPGGA_Sentence * gpgga) {
     printf("GPGGA Sentence:\n");
-    printf("  UTC Time: %06u\n", gpgga->utc_time);
+    printf("  UTC Time: %s \n", PARSE_UTC(gpgga->utc_time));
     printf("  Latitude: %.6f %c\n", gpgga->latitude, gpgga->lat_dir);
     printf("  Longitude: %.6f %c\n", gpgga->longitude, gpgga->lon_dir);
     printf("  Fix Quality: %u\n", gpgga->fix_quality);
@@ -49,13 +73,13 @@ void print_GPGLL_Sentence(const struct GPGLL_Sentence * gpgll) {
     printf("GPGLL Sentence:\n");
     printf("  Latitude: %.6f %c\n", gpgll->latitude, gpgll->lat_dir);
     printf("  Longitude: %.6f %c\n", gpgll->longitude, gpgll->lon_dir);
-    printf("  UTC Time: %06u\n", gpgll->utc_time);
+    printf("  UTC Time: %s \n", PARSE_UTC(gpgll->utc_time));
     printf("  Status: %c\n", gpgll->status);
 }
 
 void print_GPRMC_Sentence(const struct GPRMC_Sentence * gprmc) {
     printf("GPRMC Sentence:\n");
-    printf("  UTC Time: %06u\n", gprmc->utc_time);
+    printf("  UTC Time: %s\n", PARSE_UTC(gprmc->utc_time));
     printf("  Status: %c\n", gprmc->status);
     printf("  Latitude: %.6f %c\n", gprmc->latitude, gprmc->lat_dir);
     printf("  Longitude: %.6f %c\n", gprmc->longitude, gprmc->lon_dir);
@@ -102,7 +126,7 @@ void print_GPGSV_Sentence(const struct GPGSV_Sentence * gpgsv) {
 
 void print_GPZDA_Sentence(const struct GPZDA_Sentence * gpzda) {
     printf("GPZDA Sentence:\n");
-    printf("  UTC Time: %06u\n", gpzda->utc_time);
+    printf("  UTC Time: %s\n", PARSE_UTC(gpzda->utc_time));
     printf("  Date: %02u/%02u/%04u\n", gpzda->day, gpzda->month, gpzda->year);
     printf("  Local Hour Offset: %d\n", gpzda->local_hour_offset);
     printf("  Local Minute Offset: %d\n", gpzda->local_minute_offset);
@@ -110,7 +134,7 @@ void print_GPZDA_Sentence(const struct GPZDA_Sentence * gpzda) {
 
 void print_GPGBS_Sentence(const struct GPGBS_Sentence * gpgbs) {
     printf("GPGBS Sentence:\n");
-    printf("  UTC Time: %06u\n", gpgbs->utc_time);
+    printf("  UTC Time: %s\n", PARSE_UTC(gpgbs->utc_time));
     printf("  Horizontal Error: %.2f meters\n", gpgbs->horizontal_error);
     printf("  Vertical Error: %.2f meters\n", gpgbs->vertical_error);
     printf("  Position Error: %.2f meters\n", gpgbs->position_error);
@@ -180,3 +204,8 @@ void printall(void) {
 //    printf("Capacity %zu \n",
 //           capacity());
 //}
+
+
+
+
+
