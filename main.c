@@ -24,8 +24,7 @@ int main(void) {
     while(fgets(buffer, sizeof(buffer), fp) != NULL) {
         push(parser(buffer));
     }
-    test_print();
-//    printall();
+    printall();
     fclose(fp);
     return EXIT_SUCCESS;
 }

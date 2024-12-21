@@ -110,7 +110,7 @@ void print_GPGBS_Sentence(const struct GPGBS_Sentence * gpgbs) {
     printf("  Position Error: %.2f meters\n", gpgbs->position_error);
 }
 
-void test_print(void) {
+void printall(void) {
     const NMEA_SentenceType * curr = Front();
     const NMEA_SentenceType * end = Back();
     while(curr != end) {

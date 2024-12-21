@@ -2,7 +2,6 @@
 #define NMEA_H__
 
 #include "cbuf.h"
-
 #include "sentences.h"
 
 #define TOKEN_SIZE 256

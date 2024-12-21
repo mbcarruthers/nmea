@@ -19,6 +19,6 @@ void print_GPZDA_Sentence(const struct GPZDA_Sentence * gpzda);
 
 void print_GPGBS_Sentence(const struct GPGBS_Sentence * gpgbs);
 
-void test_print(void);
+void printall(void);
 
 #endif
