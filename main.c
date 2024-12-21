@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "nmea.h"
+#include "console.h"
 
 // basic operations
 // open file
@@ -8,6 +9,8 @@
 // parse line
 // push to array
 // print array
+
+
 
 int main(void) {
     FILE* fp;
@@ -21,7 +24,8 @@ int main(void) {
     while(fgets(buffer, sizeof(buffer), fp) != NULL) {
         push(parser(buffer));
     }
-    printall();
+    test_print();
+//    printall();
     fclose(fp);
     return EXIT_SUCCESS;
 }

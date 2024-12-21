@@ -4,7 +4,7 @@ TARGET = main
 
 DEBUG = -DDEBUG -g
  ## Todo Sort and actually make the Makefile Robust, McCain
-C_SOURCES = main.c cbuf.c nmea.c sentences.c
+C_SOURCES = main.c cbuf.c nmea.c sentences.c console.c
 O_FILES = $(C_SOURCES:.c=.o)
 DEFAULT_GOAL := help
 
