@@ -74,6 +74,16 @@ static inline void handle_GPRMC_Sentence(struct GPRMC_Sentence * s,
     // Note: implement the rest
 }
 
+NMEA_Mask nmea_to_mask(const char *token) {
+    for (int i = 0; nmea_map[i].token != NULL; i++) {
+        if (strcmp(token, nmea_map[i].token) == 0) {
+            return nmea_map[i].mask;
+        }
+    }
+    return UNKNOWN;
+}
+
+
 // parser - the BIG function.
 // TODO: Consider using lookup tables, already have bitmasks ready
 NMEA_SentenceType parser(char * restrict str) {
@@ -230,53 +240,4 @@ NMEA_SentenceType parser(char * restrict str) {
     return sentence;
 }
 
-// todo remove?
-// parse_sentence - unused currently. Keep for now. 12.18.24
-void parse_sentence(char * str) {
-    char token[TOKEN_SIZE] = {0}, *strp = str;
-    char tokens[MAX_TOKENS][TOKEN_LENGTH];
-//    struct NMEA_SentenceType *sentence;
-    size_t count = parse_csv_line(str, tokens);
-    printf("Count of csv file %zu \n",
-           count); // to get compiler off my back abt an unused fn
 
-
-    while (*strp) {
-        if (*strp == '$') {
-            strp++;
-            int i = 0;
-            while (*strp != ',' && *strp != '\0') {
-                token[i++] = *strp++; // copy char move pointer. beautiful
-            }
-            token[i] = '\0';
-            NMEA_Mask mask = nmea_to_mask(token);
-            printf("Token %s \n Mask %x \n",
-                   token, mask);
-
-//          switch(mask) {
-//              case GPGGA:
-//                  break;
-//              case GPGLL:
-//                  break;
-//              case GPRMC:
-//                  break;
-//              case GPVTG:
-//                  break;
-//              case GPGSA:
-//                  break;
-//              case GPGSV:
-//                  break;
-//              case GPZDA:
-//                  break;
-//              case GPGBS:
-//                  break;
-//              case UNKNOWN:
-//                  printf("Unknown detected \n");
-//                  break;
-//              default:
-//                  break;
-//          }
-            return; // Note: Keep return to ensure the next line is read
-        }
-    }
-}
