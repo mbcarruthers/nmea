@@ -111,7 +111,6 @@ struct GPGBS_Sentence {
     float position_error; // overall position accuracy in meters
 };
 
-
 typedef struct {
     NMEA_Mask nmea;
     union {
@@ -125,10 +124,6 @@ typedef struct {
         struct GPGBS_Sentence gpgbs;
     } value;
 } NMEA_SentenceType;
-
-// determines what type of NMEA sentence it is based on the 3rd and fourth letters
-// with a little bit of bitwise hackery
-NMEA_Mask nmea_to_mask(const char * restrict token);
 
 // NMEA_SENTENCES_H__
 #endif

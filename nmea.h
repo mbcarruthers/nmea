@@ -8,12 +8,28 @@
 #define MAX_TOKENS 64
 #define TOKEN_LENGTH 64
 
+typedef struct {
+    const char* token;
+    NMEA_Mask mask;
+} tokenMap;
+
+static const tokenMap nmea_map[] = {
+        {"GPGGA", GPGGA },
+        {"GPGLL", GPGLL },
+        {"GPRMC", GPRMC },
+        {"GPVTG", GPVTG },
+        {"GPGSA", GPGSA },
+        {"GPGSV", GPGSV },
+        {"GPZDA", GPZDA },
+        {"GPGBS", GPGBS }
+};
+
 size_t parse_csv_line(const char * line, char tokens[MAX_TOKENS][TOKEN_LENGTH]);
+
+NMEA_Mask nmea_to_mask(const char *token);
 
 NMEA_SentenceType parser(char * restrict str);
 
-// parse_sentence original design for function
-void parse_sentence(char * str);
 
 // NMEA_H__
 #endif
