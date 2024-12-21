@@ -5,9 +5,8 @@
 /*
  * @ parse.h - Page 156 from CPL, essentially. Some minor nuances changed
  */
-
-#ifndef CPL_PARSE_H
-#define CPL_PARSE_H
+#ifndef FN_GRAVEYARD__
+#define FN_GRAVEYARD__
 #include <stdio.h>
 #include <stdarg.h>
 
@@ -94,4 +93,33 @@ void parse(char * fmt, ...) {
 //
 //    return token_count;
 //}
-#endif //CPL_PARSE_H
+
+// initial throwaway buffer
+
+//#include <stdio.h>
+//#include <stdlib.h>
+//#include "cbuf.h"
+//
+//#define BUFFER_LENGTH 24
+//
+//
+//static NMEA_SentenceType recvd[BUFFER_LENGTH]; // Ring buffer -> log
+//static NMEA_SentenceType * front = recvd;
+//static NMEA_SentenceType * back = &recvd[BUFFER_LENGTH];
+//
+//size_t capacity(void) {
+//    return (size_t)(front >= back) ? (front - back) : ((sizeof(recvd) / sizeof(recvd[0])) - (back- front));
+//}
+//
+//void push(NMEA_SentenceType sentence) {
+//    *front = sentence;
+//
+//
+//    if (++front == back) {
+//        front = recvd; // cheap circular buffer
+//    }
+//    printf("Capacity %zu \n",
+//           capacity());
+//}
+
+#endif // FN_GRAVEYARD __
