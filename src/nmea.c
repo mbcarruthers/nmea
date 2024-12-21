@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-// ------------------------ Parsing functions ---------------------------------------
+// ========================= Parsing functions =========================================
 size_t parse_csv_line(const char * line, char tokens[MAX_TOKENS][TOKEN_LENGTH]) {
     size_t token_count = 0;
     const char *cur = line;
@@ -48,10 +48,18 @@ static inline uint32_t parse_uint32(const char * token) {
     return token ? (uint32_t) strtoul(token, NULL, 10) : 0;
 }
 
-// ---------------------- Data Handling -----------------------------------------------
+NMEA_Mask nmea_to_mask(const char *token) {
+    for (int i = 0; nmea_map[i].token != NULL; i++) {
+        if (strcmp(token, nmea_map[i].token) == 0) {
+            return nmea_map[i].mask;
+        }
+    }
+    return UNKNOWN;
+}
+// ========================== Data Handling =============================================
 
 static inline void handle_GPGGA_Sentence(NMEA_SentenceType * sentence,
-        char tokens[MAX_TOKENS][TOKEN_LENGTH]) {
+                                         char tokens[MAX_TOKENS][TOKEN_LENGTH]) {
     sentence->value.gpgga.utc_time = parse_uint32(tokens[1]);
     sentence->value.gpgga.latitude = parse_float(tokens[2]);
     sentence->value.gpgga.lat_dir = (char)(*tokens[3]);
@@ -64,25 +72,126 @@ static inline void handle_GPGGA_Sentence(NMEA_SentenceType * sentence,
     sentence->value.gpgga.geoidal_seperation = parse_float(tokens[11]);
 }
 
-static inline void handle_GPGLL_Sentence(struct GPGLL_Sentence * s,
-        char tokens[MAX_TOKENS][TOKEN_LENGTH]) {
-    // Note: Implement the rest
+static inline void handle_GPGLL_Sentence(NMEA_SentenceType * sentence,
+                                         char tokens[MAX_TOKENS][TOKEN_LENGTH]) {
+    sentence->value.gpgll.latitude = parse_float(tokens[1]);
+    sentence->value.gpgll.lat_dir = (char)(*tokens[2]);
+    sentence->value.gpgll.longitude = parse_float(tokens[3]);
+    sentence->value.gpgll.lon_dir = (char)(*tokens[4]);
+    sentence->value.gpgll.utc_time = parse_uint32(tokens[5]);
+    sentence->value.gpgll.status = (char)(*tokens[6]);
 }
 
-static inline void handle_GPRMC_Sentence(struct GPRMC_Sentence * s,
-        char tokens[MAX_TOKENS][TOKEN_LENGTH]) {
-    // Note: implement the rest
+static inline void handle_GPRMC_Sentence(NMEA_SentenceType * sentence,
+                                         char tokens[MAX_TOKENS][TOKEN_LENGTH]) {
+    sentence->value.gprmc.utc_time = parse_uint32(tokens[1]);
+    sentence->value.gprmc.status = (char)(*tokens[2]);
+    sentence->value.gprmc.latitude = parse_float(tokens[3]);
+    sentence->value.gprmc.lat_dir = (char)(*tokens[4]);
+    sentence->value.gprmc.longitude = parse_float(tokens[5]);
+    sentence->value.gprmc.lon_dir = (char)(*tokens[6]);
+    sentence->value.gprmc.speed_over_ground = parse_float(tokens[7]);
+    sentence->value.gprmc.course_over_ground = parse_float(tokens[8]);
+    sentence->value.gprmc.date = parse_uint32(tokens[9]);
+    sentence->value.gprmc.magnetic_variation = parse_float(tokens[10]);
+    sentence->value.gprmc.var_dir = (char)(*tokens[11]);
 }
 
-NMEA_Mask nmea_to_mask(const char *token) {
-    for (int i = 0; nmea_map[i].token != NULL; i++) {
-        if (strcmp(token, nmea_map[i].token) == 0) {
-            return nmea_map[i].mask;
+static inline void handle_GPVTG_Sentence(NMEA_SentenceType * sentence,
+                                         char tokens[MAX_TOKENS][TOKEN_LENGTH]) {
+    sentence->value.gpvtg.true_track = parse_float(tokens[1]);
+    sentence->value.gpvtg.true_indicator = (char)(*tokens[2]);
+    sentence->value.gpvtg.magnetic_track = parse_float(tokens[3]);
+    sentence->value.gpvtg.magnetic_indicator = (char)(*tokens[4]);
+    sentence->value.gpvtg.speed_knots = parse_float(tokens[5]);
+    sentence->value.gpvtg.knots_indicator = (char)(*tokens[6]);
+    sentence->value.gpvtg.speed_kmph = parse_float(tokens[7]);
+    sentence->value.gpvtg.kmph_indicator = (char)(*tokens[8]);
+}
+
+static inline void handle_GPGSA_Sentence(NMEA_SentenceType * sentence, size_t count,
+                                         char tokens[MAX_TOKENS][TOKEN_LENGTH]) {
+    sentence->value.gpgsa.mode = tokens[1][0]; // 'A' or 'M'
+    sentence->value.gpgsa.fix_type = (uint8_t)atoi(tokens[2]);
+
+    // parse 12 satellites
+    for (int i = 0; i < 12; i++) {
+        if (tokens[3 + i][0] == '\0' || !isdigit((unsigned char)tokens[3 + i][0])) {
+            sentence->value.gpgsa.satellites[i] = 0;
+        } else {
+            sentence->value.gpgsa.satellites[i] = (uint8_t)atoi(tokens[3 + i]);
         }
     }
-    return UNKNOWN;
+
+    // zero init dilution values
+    float pdop = 0.0f, hdop = 0.0f, vdop = 0.0f;
+    int found = 0; // how many numeric fields found from the end
+
+    // count is the number of tokens returned by parse_csv_line
+    for (int i = (int)count - 1; i >= 0 && found < 3; i--) {
+        if (tokens[i][0] != '\0') {
+
+            float val = parse_float(tokens[i]);
+
+            // Assign values in reverse order
+            if (found == 0) {
+                vdop = val; // First numeric from end
+            } else if (found == 1) {
+                hdop = val; // Second numeric from end
+            } else if (found == 2) {
+                pdop = val; // Third numeric from end
+            }
+            found++;
+        }
+    }
+
+    // If fewer than 3 fields found, missing remain 0.0 by default
+    sentence->value.gpgsa.pdop = pdop;
+    sentence->value.gpgsa.hdop = hdop;
+    sentence->value.gpgsa.vdop = vdop;
 }
 
+static inline void handle_GPGSV_Sentence(NMEA_SentenceType * sentence,
+                                         char tokens[MAX_TOKENS][TOKEN_LENGTH]) {
+    sentence->value.gpgsv.total_messages = (uint8_t)atoi(tokens[1]);
+    sentence->value.gpgsv.message_number = (uint8_t)atoi(tokens[2]);
+    sentence->value.gpgsv.satellites_in_view = (uint8_t)atoi(tokens[3]);
+    // base = offset used to calculate the index of satellite data tokens
+    for (int i = 0; i < 4; i++) {
+        int base = 4 + (i * 4); // * 4 accounts for the four attributes
+        // Note: if empty data then satellites info zero initialized
+        if (tokens[base][0] == '\0') {
+            sentence->value.gpgsv.satellite_info[i].ptn = 0;
+            sentence->value.gpgsv.satellite_info[i].elevation = 0;
+            sentence->value.gpgsv.satellite_info[i].azimuth = 0;
+            sentence->value.gpgsv.satellite_info[i].snr = 0;
+        } else {
+            sentence->value.gpgsv.satellite_info[i].ptn = parse_uint32(tokens[base]);
+            sentence->value.gpgsv.satellite_info[i].elevation = parse_uint32(tokens[base + 1]);
+            sentence->value.gpgsv.satellite_info[i].azimuth = parse_uint32(tokens[base + 2]);
+            sentence->value.gpgsv.satellite_info[i].snr = (uint8_t)atoi(tokens[base + 3]);
+        }
+    }
+}
+
+static inline void handle_GPZDA_Sentence(NMEA_SentenceType * sentence,
+                                         char tokens[MAX_TOKENS][TOKEN_LENGTH]) {
+    sentence->value.gpzda.utc_time = parse_uint32(tokens[1]);
+    sentence->value.gpzda.day = (uint8_t)atoi(tokens[2]);
+    sentence->value.gpzda.month = (uint8_t)atoi(tokens[3]);
+    sentence->value.gpzda.year = (uint16_t)atoi(tokens[4]);
+    sentence->value.gpzda.local_hour_offset = (uint8_t)atoi(tokens[5]);
+    sentence->value.gpzda.local_minute_offset = (uint8_t)atoi(tokens[6]);
+}
+
+static inline void handle_GPGBS_Sentence(NMEA_SentenceType * sentence,
+                                         char tokens[MAX_TOKENS][TOKEN_LENGTH]) {
+    sentence->value.gpgbs.utc_time = parse_uint32(tokens[1]);
+    sentence->value.gpgbs.horizontal_error = parse_float(tokens[2]);
+    sentence->value.gpgbs.vertical_error = parse_float(tokens[3]);
+    sentence->value.gpgbs.position_error = parse_float(tokens[4]);
+}
+// =======================================================================================
 
 // parser - the BIG function.
 // TODO: Consider using lookup tables, already have bitmasks ready
@@ -96,9 +205,8 @@ NMEA_SentenceType parser(char * restrict str) {
     char * sentence_type = tokens[0] + sizeof(char); // string variable for NMEA sentence type - sizeof(char) for explicitness
 
     sentence.nmea = nmea_to_mask(sentence_type);
-    // Todo: declare iterator(not i) = 0 in switch,i++ indexs.
 
-
+    // Todo: declare iterator(not i) = 0 in switch,i++ indexs
     switch(sentence.nmea) {
         case GPGGA:
 //            sentence.value.gpgga.utc_time = parse_uint32(tokens[1]);
@@ -115,117 +223,123 @@ NMEA_SentenceType parser(char * restrict str) {
             return sentence;
             break;
         case GPGLL:
-            sentence.value.gpgll.latitude = parse_float(tokens[1]);
-            sentence.value.gpgll.lat_dir = (char)(*tokens[2]);
-            sentence.value.gpgll.longitude = parse_float(tokens[3]);
-            sentence.value.gpgll.lon_dir = (char)(*tokens[4]);
-            sentence.value.gpgll.utc_time = parse_uint32(tokens[5]);
-            sentence.value.gpgll.status = (char)(*tokens[6]);
+//            sentence.value.gpgll.latitude = parse_float(tokens[1]);
+//            sentence.value.gpgll.lat_dir = (char)(*tokens[2]);
+//            sentence.value.gpgll.longitude = parse_float(tokens[3]);
+//            sentence.value.gpgll.lon_dir = (char)(*tokens[4]);
+//            sentence.value.gpgll.utc_time = parse_uint32(tokens[5]);
+//            sentence.value.gpgll.status = (char)(*tokens[6]);
+            handle_GPGLL_Sentence(&sentence, tokens);
             return sentence;
             break;
         case GPRMC:
-            sentence.value.gprmc.utc_time = parse_uint32(tokens[1]);
-            sentence.value.gprmc.status = (char)(*tokens[2]);
-            sentence.value.gprmc.latitude = parse_float(tokens[3]);
-            sentence.value.gprmc.lat_dir = (char)(*tokens[4]);
-            sentence.value.gprmc.longitude = parse_float(tokens[5]);
-            sentence.value.gprmc.lon_dir = (char)(*tokens[6]);
-            sentence.value.gprmc.speed_over_ground = parse_float(tokens[7]);
-            sentence.value.gprmc.course_over_ground = parse_float(tokens[8]);
-            sentence.value.gprmc.date = parse_uint32(tokens[9]);
-            sentence.value.gprmc.magnetic_variation = parse_float(tokens[10]);
-            sentence.value.gprmc.var_dir = (char)(*tokens[11]);
+//            sentence.value.gprmc.utc_time = parse_uint32(tokens[1]);
+//            sentence.value.gprmc.status = (char)(*tokens[2]);
+//            sentence.value.gprmc.latitude = parse_float(tokens[3]);
+//            sentence.value.gprmc.lat_dir = (char)(*tokens[4]);
+//            sentence.value.gprmc.longitude = parse_float(tokens[5]);
+//            sentence.value.gprmc.lon_dir = (char)(*tokens[6]);
+//            sentence.value.gprmc.speed_over_ground = parse_float(tokens[7]);
+//            sentence.value.gprmc.course_over_ground = parse_float(tokens[8]);
+//            sentence.value.gprmc.date = parse_uint32(tokens[9]);
+//            sentence.value.gprmc.magnetic_variation = parse_float(tokens[10]);
+//            sentence.value.gprmc.var_dir = (char)(*tokens[11]);
+            handle_GPRMC_Sentence(&sentence, tokens);
             return sentence;
             break;
         case GPVTG:
-            sentence.value.gpvtg.true_track = parse_float(tokens[1]);
-            sentence.value.gpvtg.true_indicator = (char)(*tokens[2]);
-            sentence.value.gpvtg.magnetic_track = parse_float(tokens[3]);
-            sentence.value.gpvtg.magnetic_indicator = (char)(*tokens[4]);
-            sentence.value.gpvtg.speed_knots = parse_float(tokens[5]);
-            sentence.value.gpvtg.knots_indicator = (char)(*tokens[6]);
-            sentence.value.gpvtg.speed_kmph = parse_float(tokens[7]);
-            sentence.value.gpvtg.kmph_indicator = (char)(*tokens[8]);
+//            sentence.value.gpvtg.true_track = parse_float(tokens[1]);
+//            sentence.value.gpvtg.true_indicator = (char)(*tokens[2]);
+//            sentence.value.gpvtg.magnetic_track = parse_float(tokens[3]);
+//            sentence.value.gpvtg.magnetic_indicator = (char)(*tokens[4]);
+//            sentence.value.gpvtg.speed_knots = parse_float(tokens[5]);
+//            sentence.value.gpvtg.knots_indicator = (char)(*tokens[6]);
+//            sentence.value.gpvtg.speed_kmph = parse_float(tokens[7]);
+//            sentence.value.gpvtg.kmph_indicator = (char)(*tokens[8]);
+            handle_GPVTG_Sentence(&sentence, tokens);
             return sentence;
             break;
         case GPGSA:
-            sentence.value.gpgsa.mode = tokens[1][0]; // 'A' or 'M'
-            sentence.value.gpgsa.fix_type = (uint8_t)atoi(tokens[2]);
-
-            // Parse satellites (up to 12, empty fields = 0)
-            for (int i = 0; i < 12; i++) {
-                if (tokens[3 + i][0] == '\0' || !isdigit((unsigned char)tokens[3 + i][0])) {
-                    sentence.value.gpgsa.satellites[i] = 0;
-                } else {
-                    sentence.value.gpgsa.satellites[i] = (uint8_t)atoi(tokens[3 + i]);
-                }
-            }
-
-            // Identify PDOP, HDOP, VDOP by scanning from the end:
-            float pdop = 0.0f, hdop = 0.0f, vdop = 0.0f;
-            int found = 0; // how many numeric fields found from the end
-
-            // count is the number of tokens returned by parse_csv_line
-            for (int i = (int)count - 1; i >= 0 && found < 3; i--) {
-                if (tokens[i][0] != '\0') {
-                    // Attempt to parse as float
-                    float val = parse_float(tokens[i]);
-
-                    // Assign values in reverse order
-                    if (found == 0) {
-                        vdop = val; // First numeric from end
-                    } else if (found == 1) {
-                        hdop = val; // Second numeric from end
-                    } else if (found == 2) {
-                        pdop = val; // Third numeric from end
-                    }
-                    found++;
-                }
-            }
-
-            // If fewer than 3 fields found, missing remain 0.0 by default
-            sentence.value.gpgsa.pdop = pdop;
-            sentence.value.gpgsa.hdop = hdop;
-            sentence.value.gpgsa.vdop = vdop;
-
+//            sentence.value.gpgsa.mode = tokens[1][0]; // 'A' or 'M'
+//            sentence.value.gpgsa.fix_type = (uint8_t)atoi(tokens[2]);
+//
+//            // parse 12 satellites
+//            for (int i = 0; i < 12; i++) {
+//                if (tokens[3 + i][0] == '\0' || !isdigit((unsigned char)tokens[3 + i][0])) {
+//                    sentence.value.gpgsa.satellites[i] = 0;
+//                } else {
+//                    sentence.value.gpgsa.satellites[i] = (uint8_t)atoi(tokens[3 + i]);
+//                }
+//            }
+//
+//            // zero init dilution values
+//            float pdop = 0.0f, hdop = 0.0f, vdop = 0.0f;
+//            int found = 0; // how many numeric fields found from the end
+//
+//            // count is the number of tokens returned by parse_csv_line
+//            for (int i = (int)count - 1; i >= 0 && found < 3; i--) {
+//                if (tokens[i][0] != '\0') {
+//
+//                    float val = parse_float(tokens[i]);
+//
+//                    // Assign values in reverse order
+//                    if (found == 0) {
+//                        vdop = val; // First numeric from end
+//                    } else if (found == 1) {
+//                        hdop = val; // Second numeric from end
+//                    } else if (found == 2) {
+//                        pdop = val; // Third numeric from end
+//                    }
+//                    found++;
+//                }
+//            }
+//
+//            // If fewer than 3 fields found, missing remain 0.0 by default
+//            sentence.value.gpgsa.pdop = pdop;
+//            sentence.value.gpgsa.hdop = hdop;
+//            sentence.value.gpgsa.vdop = vdop;
+            handle_GPGSA_Sentence(&sentence, count, tokens);
             return sentence;
             break;
         case GPGSV:
-            sentence.value.gpgsv.total_messages = (uint8_t)atoi(tokens[1]);
-            sentence.value.gpgsv.message_number = (uint8_t)atoi(tokens[2]);
-            sentence.value.gpgsv.satellites_in_view = (uint8_t)atoi(tokens[3]);
-            // base = offset used to calculate the index of satellite data tokens
-            for (int i = 0; i < 4; i++) {
-                int base = 4 + (i * 4); // * 4 accounts for the four attributes
-                // Note: if empty data then satellites info zero initialized
-                if (tokens[base][0] == '\0') {
-                    sentence.value.gpgsv.satellite_info[i].ptn = 0;
-                    sentence.value.gpgsv.satellite_info[i].elevation = 0;
-                    sentence.value.gpgsv.satellite_info[i].azimuth = 0;
-                    sentence.value.gpgsv.satellite_info[i].snr = 0;
-                } else {
-                    sentence.value.gpgsv.satellite_info[i].ptn = parse_uint32(tokens[base]);
-                    sentence.value.gpgsv.satellite_info[i].elevation = parse_uint32(tokens[base + 1]);
-                    sentence.value.gpgsv.satellite_info[i].azimuth = parse_uint32(tokens[base + 2]);
-                    sentence.value.gpgsv.satellite_info[i].snr = (uint8_t)atoi(tokens[base + 3]);
-                }
-            }
+//            sentence.value.gpgsv.total_messages = (uint8_t)atoi(tokens[1]);
+//            sentence.value.gpgsv.message_number = (uint8_t)atoi(tokens[2]);
+//            sentence.value.gpgsv.satellites_in_view = (uint8_t)atoi(tokens[3]);
+//            // base = offset used to calculate the index of satellite data tokens
+//            for (int i = 0; i < 4; i++) {
+//                int base = 4 + (i * 4); // * 4 accounts for the four attributes
+//                // Note: if empty data then satellites info zero initialized
+//                if (tokens[base][0] == '\0') {
+//                    sentence.value.gpgsv.satellite_info[i].ptn = 0;
+//                    sentence.value.gpgsv.satellite_info[i].elevation = 0;
+//                    sentence.value.gpgsv.satellite_info[i].azimuth = 0;
+//                    sentence.value.gpgsv.satellite_info[i].snr = 0;
+//                } else {
+//                    sentence.value.gpgsv.satellite_info[i].ptn = parse_uint32(tokens[base]);
+//                    sentence.value.gpgsv.satellite_info[i].elevation = parse_uint32(tokens[base + 1]);
+//                    sentence.value.gpgsv.satellite_info[i].azimuth = parse_uint32(tokens[base + 2]);
+//                    sentence.value.gpgsv.satellite_info[i].snr = (uint8_t)atoi(tokens[base + 3]);
+//                }
+//            }
+            handle_GPGSV_Sentence(&sentence, tokens);
             return sentence;
             break;
         case GPZDA:
-            sentence.value.gpzda.utc_time = parse_uint32(tokens[1]);
-            sentence.value.gpzda.day = (uint8_t)atoi(tokens[2]);
-            sentence.value.gpzda.month = (uint8_t)atoi(tokens[3]);
-            sentence.value.gpzda.year = (uint16_t)atoi(tokens[4]);
-            sentence.value.gpzda.local_hour_offset = (uint8_t)atoi(tokens[5]);
-            sentence.value.gpzda.local_minute_offset = (uint8_t)atoi(tokens[6]);
+//            sentence.value.gpzda.utc_time = parse_uint32(tokens[1]);
+//            sentence.value.gpzda.day = (uint8_t)atoi(tokens[2]);
+//            sentence.value.gpzda.month = (uint8_t)atoi(tokens[3]);
+//            sentence.value.gpzda.year = (uint16_t)atoi(tokens[4]);
+//            sentence.value.gpzda.local_hour_offset = (uint8_t)atoi(tokens[5]);
+//            sentence.value.gpzda.local_minute_offset = (uint8_t)atoi(tokens[6]);
+            handle_GPZDA_Sentence(&sentence, tokens);
             return sentence;
             break;
         case GPGBS:
-            sentence.value.gpgbs.utc_time = parse_uint32(tokens[1]);
-            sentence.value.gpgbs.horizontal_error = parse_float(tokens[2]);
-            sentence.value.gpgbs.vertical_error = parse_float(tokens[3]);
-            sentence.value.gpgbs.position_error = parse_float(tokens[4]);
+//            sentence.value.gpgbs.utc_time = parse_uint32(tokens[1]);
+//            sentence.value.gpgbs.horizontal_error = parse_float(tokens[2]);
+//            sentence.value.gpgbs.vertical_error = parse_float(tokens[3]);
+//            sentence.value.gpgbs.position_error = parse_float(tokens[4]);
+            handle_GPGBS_Sentence(&sentence, tokens);
             return sentence;
             break;
         case UNKNOWN:
