@@ -54,4 +54,44 @@ void parse(char * fmt, ...) {
     va_end(ap); // 4 clearing arguments
 }
 
+
+// old_parse_csv - from nmea.c
+//size_t parse_csv_line(const char * line, char tokens[MAX_TOKENS][TOKEN_LENGTH]) {
+//    size_t token_count = 0;
+//    const char *start = line;
+//    const char *end;
+//
+//    while((end = strchr(start, ',')) != NULL) {
+//        size_t length = end - start; // Length of the current token
+//
+//
+//        if(length >= TOKEN_LENGTH) {
+//            fprintf(stderr, "Token exceeds maximum size.\n");
+//            return 0; // Error
+//        }
+//
+//
+//        strncpy(tokens[token_count], start, length);
+//        tokens[token_count][length] = '\0'; // Null-terminate
+//        token_count++;
+//
+//        // move to the next token
+//        start = end + 1;
+//
+//
+//        if(token_count >= MAX_TOKENS) {
+//            fprintf(stderr, "Too many tokens in the line.\n");
+//            return token_count; // Return the count so far
+//        }
+//    }
+//
+//    // handle the last token (after the final comma or if no commas)
+//    if (*start != '\0') {
+//        strncpy(tokens[token_count], start, TOKEN_SIZE - 1);
+//        tokens[token_count][TOKEN_LENGTH - 1] = '\0'; // Null-terminate
+//        token_count++;
+//    }
+//
+//    return token_count;
+//}
 #endif //CPL_PARSE_H
