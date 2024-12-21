@@ -23,7 +23,7 @@ int main(int argc, char * argv[]) {
         fprintf(stderr, "Error opening nmea.txt \n");
         return EXIT_FAILURE;
     }
-    char buffer[256];
+    char buffer[256] = {0};
 
     while(fgets(buffer, sizeof(buffer), fp) != NULL) {
         push(parser(buffer));
