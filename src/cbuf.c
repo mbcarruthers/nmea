@@ -14,6 +14,8 @@ size_t capacity(void) {
 }
 
 void push(NMEA_SentenceType sentence) {
+    if(sentence.nmea == UNKNOWN) return;
+
     *front = sentence;
     if (count < BUFFER_LENGTH) {
         count++;
@@ -36,40 +38,4 @@ const NMEA_SentenceType * Back(void) {
 }
 
 
-//// Note: Original tightly coupled printing mechanism
-//void printall__(void) {
-//    for(size_t i = 0; i < capacity();i++) {
-//       switch(recvd[i].nmea) {
-//           case GPGGA:
-//               print_GPGGA_Sentence(&recvd[i].value.gpgga);
-//               break;
-//           case GPGLL:
-//               print_GPGLL_Sentence(&recvd[i].value.gpgll);
-//               break;
-//           case GPRMC:
-//               print_GPRMC_Sentence(&recvd[i].value.gprmc);
-//               break;
-//           case GPVTG:
-//               print_GPVTG_Sentence(&recvd[i].value.gpvtg);
-//               break;
-//           case GPGSA:
-//               print_GPGSA_Sentence(&recvd[i].value.gpgsa);
-//               break;
-//           case GPGSV:
-//               print_GPGSV_Sentence(&recvd[i].value.gpgsv);
-//               break;
-//           case GPZDA:
-//               print_GPZDA_Sentence(&recvd[i].value.gpzda);
-//               break;
-//           case GPGBS:
-//               print_GPGBS_Sentence(&recvd[i].value.gpgbs);
-//               break;
-//           case UNKNOWN:
-//               printf("Unknown printall called\n");
-//               break;
-//            default:
-//               printf("default printall called \n");
-//               break;
-//       }
-//    }
-//}
+

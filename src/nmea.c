@@ -6,33 +6,34 @@
 #include <string.h>
 #include <stdlib.h>
 
+
+
 // ========================= Parsing functions =========================================
 size_t parse_csv_line(const char * line, char tokens[MAX_TOKENS][TOKEN_LENGTH]) {
+    if(line[0] != '$') {
+        return 0;
+    }
     size_t token_count = 0;
-    const char *cur = line;
+    const char *curr = line;
 
-    while (*cur != '\0' && token_count < MAX_TOKENS) {
-        // Find the length of the next token by scanning until a comma or end of string
-        size_t length = strcspn(cur, ",");
+    while ((*curr != '\0') && (*curr != '\n') && token_count < MAX_TOKENS) {
+
+        size_t length = strcspn(curr, ",");
 
         if (length >= TOKEN_LENGTH) {
             fprintf(stderr, "Token exceeds maximum size.\n");
-            // Return what we got so far; no partial token stored
             return token_count;
         }
 
-        // Copy exactly 'length' chars into the token
-        memcpy(tokens[token_count], cur, length);
-        tokens[token_count][length] = '\0'; // Null-terminate
+        // copy length amount of chars
+        memcpy(tokens[token_count], curr, length);
+        tokens[token_count][length] = '\0';
 
         token_count++;
+        curr += length;
 
-        // Advance past this token
-        cur += length;
-
-        // If we're at a comma, skip it to move to the next token
-        if (*cur == ',') {
-            cur++;
+        if (*curr == ',') {
+            curr++;
         }
     }
 
@@ -194,14 +195,16 @@ static inline void handle_GPGBS_Sentence(NMEA_SentenceType * sentence,
 // =======================================================================================
 
 // parser - the BIG function.
-// TODO: Consider using lookup tables, already have bitmasks ready
+// note: check for error by checking for unknown
 NMEA_SentenceType parser(char * restrict str) {
     char tokens[MAX_TOKENS][TOKEN_LENGTH];
-    // Note: unused and known
-    const size_t count = parse_csv_line(str, tokens);
-
-    // now all values are comma seperated
     NMEA_SentenceType sentence = {0};
+    const size_t count = parse_csv_line(str, tokens);
+    if(!count) {
+        sentence.nmea = UNKNOWN;
+        return sentence;
+    }
+    // now all values are comma seperated
     char * sentence_type = tokens[0] + sizeof(char); // string variable for NMEA sentence type - sizeof(char) for explicitness
 
     sentence.nmea = nmea_to_mask(sentence_type);
@@ -241,14 +244,15 @@ NMEA_SentenceType parser(char * restrict str) {
             break;
         case UNKNOWN:
             printf("Unknown detected \n");
-            return sentence;  // returns empty sentence
+            return sentence;  // returns empty unknown
             break;
         default:
-            printf("------------------------Default ------------------\n");
-            return sentence; // returns empty sentence
+            sentence.nmea = UNKNOWN;
+            return sentence; // returnsempty unknown
             break;
     }
     return sentence;
 }
 
 
+// TODO: Consider using lookup tables, already have bitmasks ready, for parser
