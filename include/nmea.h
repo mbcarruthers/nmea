@@ -13,20 +13,11 @@ typedef struct {
     NMEA_Mask mask;
 } tokenMap;
 
-static const tokenMap nmea_map[] = {
-        {"GPGGA", GPGGA },
-        {"GPGLL", GPGLL },
-        {"GPRMC", GPRMC },
-        {"GPVTG", GPVTG },
-        {"GPGSA", GPGSA },
-        {"GPGSV", GPGSV },
-        {"GPZDA", GPZDA },
-        {"GPGBS", GPGBS }
-};
-
 size_t parse_csv_line(const char * line, char tokens[MAX_TOKENS][TOKEN_LENGTH]);
 
-NMEA_Mask nmea_to_mask(const char *token);
+NMEA_Mask filter_mask(const char * token);
+
+NMEA_Mask nmea_to_mask(const char * token);
 
 NMEA_SentenceType parser(char * restrict str);
 

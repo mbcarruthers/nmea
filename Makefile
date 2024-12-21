@@ -30,21 +30,19 @@ all: ## builds the whole project
 	fi
 	$(MAKE) $(TARGET)
 
-$(TARGET): $(O_FILES) ## Link the target binary from object files
-	$(CC) $(C_FLAGS) -o $@ $^
-
-# Rule to compile each .c file into a .o file
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIRS)
-	$(CC) $(C_FLAGS) -c $< -o $@
-
-# Rule to create necessary directories for object files
-$(BUILD_DIRS):
-	mkdir -p $@
-
 debug: clean dall run ## clean, compile with debug, run
 
 dall: ## compile with debug
 	$(CC) $(C_FLAGS) $(DEBUG) $(C_SOURCES) -o $(TARGET)
+
+$(TARGET): $(O_FILES) ## Link the target binary from object files
+	$(CC) $(C_FLAGS) -o $@ $^
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIRS) ## compile each .c file into a .o file
+	$(CC) $(C_FLAGS) -c $< -o $@
+
+$(BUILD_DIRS): ## make directories
+	mkdir -p $@
 
 clean: ## clean the project files
 	rm -rf $(BUILD_DIR)
@@ -52,8 +50,16 @@ clean: ## clean the project files
 run: ## run the program
 	./$(TARGET) $(DATA_FILE)
 
-grind:
+# =============================== valgrind commands ==========================================
+
+track_memory: ## track uninitialized values
 	valgrind --track-origins=yes ./$(TARGET) $(DATA_FILE)
+
+leak_check: ## full leak check
+	valgrind --leak-check=full ./$(TARGET) $(DATA_FILES)
+
+trace_child_processes: ## maybe someday
+	valgrind --trace-children=yes ./$(TARGET) $(DATA_FILES)
 
 $(info Sources: $(C_SOURCES))
 $(info Include Flags: $(C_INCLUDES))

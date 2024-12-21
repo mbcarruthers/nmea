@@ -9,6 +9,7 @@
 
 
 // ========================= Parsing functions =========================================
+
 size_t parse_csv_line(const char * line, char tokens[MAX_TOKENS][TOKEN_LENGTH]) {
     if(line[0] != '$') {
         return 0;
@@ -49,14 +50,18 @@ static inline uint32_t parse_uint32(const char * token) {
     return token ? (uint32_t) strtoul(token, NULL, 10) : 0;
 }
 
-NMEA_Mask nmea_to_mask(const char *token) {
-    for (int i = 0; nmea_map[i].token != NULL; i++) {
-        if (strcmp(token, nmea_map[i].token) == 0) {
-            return nmea_map[i].mask;
-        }
-    }
+NMEA_Mask filter_mask(const char * token) {
+    if (strncmp(token, "GPGGA", 5) == 0) return GPGGA;
+    if (strncmp(token, "GPGLL", 5) == 0) return GPGLL;
+    if (strncmp(token, "GPRMC", 5) == 0) return GPRMC;
+    if (strncmp(token, "GPVTG", 5) == 0) return GPVTG;
+    if (strncmp(token, "GPGSA", 5) == 0) return GPGSA;
+    if (strncmp(token, "GPGSV", 5) == 0) return GPGSV;
+    if (strncmp(token, "GPZDA", 5) == 0) return GPZDA;
+    if (strncmp(token, "GPGBS", 5) == 0) return GPGBS;
     return UNKNOWN;
 }
+
 // ========================== Data Handling =============================================
 
 static inline void handle_GPGGA_Sentence(NMEA_SentenceType * sentence,
@@ -207,8 +212,8 @@ NMEA_SentenceType parser(char * restrict str) {
     // now all values are comma seperated
     char * sentence_type = tokens[0] + sizeof(char); // string variable for NMEA sentence type - sizeof(char) for explicitness
 
-    sentence.nmea = nmea_to_mask(sentence_type);
-
+//    sentence.nmea = nmea_to_mask(sentence_type);
+       sentence.nmea = filter_mask(sentence_type);
     switch(sentence.nmea) {
         case GPGGA:
             handle_GPGGA_Sentence(&sentence, tokens);

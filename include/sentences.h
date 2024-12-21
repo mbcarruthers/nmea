@@ -19,6 +19,8 @@ typedef enum {
     UNKNOWN = 0x00
 } NMEA_Mask;
 
+#define IS_MASK_SET(mask, type) ((mask) & (type))
+
 // GPS Fix data
 struct GPGGA_Sentence {
     uint32_t utc_time; // HHMMSS(UTC Time) Todo: Find RFC for this format

@@ -2,7 +2,9 @@
 
 Parses NMEA sentences from GPS
 
-
+nmea.c/.h = parsing functionality
+sentences.h = type definitions 
+cbuf.c/h = circular buffer functionality 
 
 The MIT License (MIT)
 =====================
