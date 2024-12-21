@@ -2,48 +2,43 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
+#include <string.h>
 #include <stdlib.h>
 
+// ------------------------ Parsing functions ---------------------------------------
 size_t parse_csv_line(const char * line, char tokens[MAX_TOKENS][TOKEN_LENGTH]) {
     size_t token_count = 0;
-    const char *start = line;
-    const char *end;
+    const char *cur = line;
 
-    while((end = strchr(start, ',')) != NULL) {
-        size_t length = end - start; // Length of the current token
+    while (*cur != '\0' && token_count < MAX_TOKENS) {
+        // Find the length of the next token by scanning until a comma or end of string
+        size_t length = strcspn(cur, ",");
 
-
-        if(length >= TOKEN_LENGTH) {
+        if (length >= TOKEN_LENGTH) {
             fprintf(stderr, "Token exceeds maximum size.\n");
-            return 0; // Error
+            // Return what we got so far; no partial token stored
+            return token_count;
         }
 
-
-        strncpy(tokens[token_count], start, length);
+        // Copy exactly 'length' chars into the token
+        memcpy(tokens[token_count], cur, length);
         tokens[token_count][length] = '\0'; // Null-terminate
+
         token_count++;
 
-        // move to the next token
-        start = end + 1;
+        // Advance past this token
+        cur += length;
 
-
-        if(token_count >= MAX_TOKENS) {
-            fprintf(stderr, "Too many tokens in the line.\n");
-            return token_count; // Return the count so far
+        // If we're at a comma, skip it to move to the next token
+        if (*cur == ',') {
+            cur++;
         }
-    }
-
-    // handle the last token (after the final comma or if no commas)
-    if (*start != '\0') {
-        strncpy(tokens[token_count], start, TOKEN_SIZE - 1);
-        tokens[token_count][TOKEN_LENGTH - 1] = '\0'; // Null-terminate
-        token_count++;
     }
 
     return token_count;
+
 }
-
-
 
 static inline float parse_float(const char * token) {
     return token ? strtof(token, NULL) : 0.0f;
@@ -53,14 +48,38 @@ static inline uint32_t parse_uint32(const char * token) {
     return token ? (uint32_t) strtoul(token, NULL, 10) : 0;
 }
 
+// ---------------------- Data Handling -----------------------------------------------
 
+static inline void handle_GPGGA_Sentence(NMEA_SentenceType * sentence,
+        char tokens[MAX_TOKENS][TOKEN_LENGTH]) {
+    sentence->value.gpgga.utc_time = parse_uint32(tokens[1]);
+    sentence->value.gpgga.latitude = parse_float(tokens[2]);
+    sentence->value.gpgga.lat_dir = (char)(*tokens[3]);
+    sentence->value.gpgga.longitude = parse_float(tokens[4]);
+    sentence->value.gpgga.lon_dir = (char)(*tokens[5]);
+    sentence->value.gpgga.fix_quality = (uint8_t)atoi(tokens[6]);
+    sentence->value.gpgga.num_satellites = (uint8_t)atoi(tokens[7]);
+    sentence->value.gpgga.hdop = parse_float(tokens[8]);
+    sentence->value.gpgga.altitude = parse_float(tokens[9]);
+    sentence->value.gpgga.geoidal_seperation = parse_float(tokens[11]);
+}
+
+static inline void handle_GPGLL_Sentence(struct GPGLL_Sentence * s,
+        char tokens[MAX_TOKENS][TOKEN_LENGTH]) {
+    // Note: Implement the rest
+}
+
+static inline void handle_GPRMC_Sentence(struct GPRMC_Sentence * s,
+        char tokens[MAX_TOKENS][TOKEN_LENGTH]) {
+    // Note: implement the rest
+}
 
 // parser - the BIG function.
 // TODO: Consider using lookup tables, already have bitmasks ready
 NMEA_SentenceType parser(char * restrict str) {
     char tokens[MAX_TOKENS][TOKEN_LENGTH];
     // Note: unused and known
-    parse_csv_line(str, tokens);
+    const size_t count = parse_csv_line(str, tokens);
 
     // now all values are comma seperated
     NMEA_SentenceType sentence = {0};
@@ -69,18 +88,20 @@ NMEA_SentenceType parser(char * restrict str) {
     sentence.nmea = nmea_to_mask(sentence_type);
     // Todo: declare iterator(not i) = 0 in switch,i++ indexs.
 
+
     switch(sentence.nmea) {
         case GPGGA:
-            sentence.value.gpgga.utc_time = parse_uint32(tokens[1]);
-            sentence.value.gpgga.latitude = parse_float(tokens[2]);
-            sentence.value.gpgga.lat_dir = (char)(*tokens[3]);
-            sentence.value.gpgga.longitude = parse_float(tokens[4]);
-            sentence.value.gpgga.lon_dir = (char)(*tokens[5]);
-            sentence.value.gpgga.fix_quality = (uint8_t)(*tokens[6]);
-            sentence.value.gpgga.num_satellites = (uint8_t)(*tokens[7]);
-            sentence.value.gpgga.hdop = parse_float(tokens[8]);
-            sentence.value.gpgga.altitude = parse_float(tokens[9]);
-            sentence.value.gpgga.geoidal_seperation = parse_float(tokens[11]);
+//            sentence.value.gpgga.utc_time = parse_uint32(tokens[1]);
+//            sentence.value.gpgga.latitude = parse_float(tokens[2]);
+//            sentence.value.gpgga.lat_dir = (char)(*tokens[3]);
+//            sentence.value.gpgga.longitude = parse_float(tokens[4]);
+//            sentence.value.gpgga.lon_dir = (char)(*tokens[5]);
+//            sentence.value.gpgga.fix_quality = (uint8_t)(*tokens[6]);
+//            sentence.value.gpgga.num_satellites = (uint8_t)(*tokens[7]);
+//            sentence.value.gpgga.hdop = parse_float(tokens[8]);
+//            sentence.value.gpgga.altitude = parse_float(tokens[9]);
+//            sentence.value.gpgga.geoidal_seperation = parse_float(tokens[11]);
+            handle_GPGGA_Sentence(&sentence, tokens);
             return sentence;
             break;
         case GPGLL:
@@ -118,19 +139,45 @@ NMEA_SentenceType parser(char * restrict str) {
             return sentence;
             break;
         case GPGSA:
-            sentence.value.gpgsa.mode = (char)(*tokens[1]);
-            sentence.value.gpgsa.fix_type = (uint8_t)(*tokens[2]);
+            sentence.value.gpgsa.mode = tokens[1][0]; // 'A' or 'M'
+            sentence.value.gpgsa.fix_type = (uint8_t)atoi(tokens[2]);
+
+            // Parse satellites (up to 12, empty fields = 0)
             for (int i = 0; i < 12; i++) {
-                if (tokens[3 + i][0] == '\0') {
-                    // Note: Empty tokens given 0 value in gpgsa.satellites
+                if (tokens[3 + i][0] == '\0' || !isdigit((unsigned char)tokens[3 + i][0])) {
                     sentence.value.gpgsa.satellites[i] = 0;
                 } else {
                     sentence.value.gpgsa.satellites[i] = (uint8_t)atoi(tokens[3 + i]);
                 }
             }
-            sentence.value.gpgsa.pdop = parse_float(tokens[15]);
-            sentence.value.gpgsa.hdop = parse_float(tokens[16]);
-            sentence.value.gpgsa.vdop = parse_float(tokens[17]);
+
+            // Identify PDOP, HDOP, VDOP by scanning from the end:
+            float pdop = 0.0f, hdop = 0.0f, vdop = 0.0f;
+            int found = 0; // how many numeric fields found from the end
+
+            // count is the number of tokens returned by parse_csv_line
+            for (int i = (int)count - 1; i >= 0 && found < 3; i--) {
+                if (tokens[i][0] != '\0') {
+                    // Attempt to parse as float
+                    float val = parse_float(tokens[i]);
+
+                    // Assign values in reverse order
+                    if (found == 0) {
+                        vdop = val; // First numeric from end
+                    } else if (found == 1) {
+                        hdop = val; // Second numeric from end
+                    } else if (found == 2) {
+                        pdop = val; // Third numeric from end
+                    }
+                    found++;
+                }
+            }
+
+            // If fewer than 3 fields found, missing remain 0.0 by default
+            sentence.value.gpgsa.pdop = pdop;
+            sentence.value.gpgsa.hdop = hdop;
+            sentence.value.gpgsa.vdop = vdop;
+
             return sentence;
             break;
         case GPGSV:
