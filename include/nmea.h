@@ -5,6 +5,7 @@
 #include "sentences.h"
 
 #define TOKEN_SIZE 256
+
 #define MAX_TOKENS 64
 #define TOKEN_LENGTH 64
 

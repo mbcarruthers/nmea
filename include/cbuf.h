@@ -12,5 +12,6 @@ void printall(void);
 const NMEA_SentenceType * Front(void);
 
 const NMEA_SentenceType * Back(void);
+
 // CBUF_H__
 #endif

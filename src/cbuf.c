@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "cbuf.h"
+
+
 // Circular buffer
 #define BUFFER_LENGTH 24
 static NMEA_SentenceType recvd[BUFFER_LENGTH];

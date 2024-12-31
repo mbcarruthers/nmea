@@ -6,7 +6,11 @@
 #include <string.h>
 #include <stdlib.h>
 
-
+// Todo:
+// Token length and max tokens should be able to be greatly reduced
+// from their original inflated sizes
+// Max_tokens ~12-24
+// token length ~8-12
 
 // ========================= Parsing functions =========================================
 
@@ -25,8 +29,6 @@ size_t parse_csv_line(const char * line, char tokens[MAX_TOKENS][TOKEN_LENGTH]) 
             fprintf(stderr, "Token exceeds maximum size.\n");
             return token_count;
         }
-
-        // copy length amount of chars
         memcpy(tokens[token_count], curr, length);
         tokens[token_count][length] = '\0';
 
@@ -129,23 +131,23 @@ static inline void handle_GPGSA_Sentence(NMEA_SentenceType * sentence, size_t co
         }
     }
 
-    // zero init dilution values
+
     float pdop = 0.0f, hdop = 0.0f, vdop = 0.0f;
     int found = 0; // how many numeric fields found from the end
 
     // count is the number of tokens returned by parse_csv_line
-    for (int i = (int)count - 1; i >= 0 && found < 3; i--) {
+    // find diluation variables for GPGSA by iterating backwards
+    for (int i = (int)count - 1; (i >= 0) && (found < 3); i--) {
         if (tokens[i][0] != '\0') {
 
             float val = parse_float(tokens[i]);
-
-            // Assign values in reverse order
+            // if its a float it's our value
             if (found == 0) {
-                vdop = val; // First numeric from end
+                vdop = val;
             } else if (found == 1) {
-                hdop = val; // Second numeric from end
+                hdop = val;
             } else if (found == 2) {
-                pdop = val; // Third numeric from end
+                pdop = val;
             }
             found++;
         }
@@ -209,11 +211,10 @@ NMEA_SentenceType parser(char * restrict str) {
         sentence.nmea = UNKNOWN;
         return sentence;
     }
-    // now all values are comma seperated
+
     char * sentence_type = tokens[0] + sizeof(char); // string variable for NMEA sentence type - sizeof(char) for explicitness
 
-//    sentence.nmea = nmea_to_mask(sentence_type);
-       sentence.nmea = filter_mask(sentence_type);
+    sentence.nmea = filter_mask(sentence_type);
     switch(sentence.nmea) {
         case GPGGA:
             handle_GPGGA_Sentence(&sentence, tokens);
