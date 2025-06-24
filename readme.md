@@ -1,4 +1,4 @@
-# nmea__
+# nmea
 
 Parses NMEA sentences from GPS
 
